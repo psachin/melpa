@@ -1,0 +1,40 @@
+#!/bin/bash
+
+export LANG=en_US.UTF-8
+MELPADIR=${MELPADIR:-$HOME/melpa}
+MELPABRANCH=${MELPABRANCH:-`git rev-parse --abbrev-ref HEAD`}
+WEBROOT=${WEBROOT:-$HOME/www}
+
+
+function timestamp {
+    date "+%Y%m%d %H:%M %z"
+}
+function unix_timestamp {
+    date "+%s"
+}
+
+function build_all {
+    timestamp
+
+    PATH=$HOME/.cabal/bin:$HOME/usr/bin:$HOME/bin:$PATH
+    [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
+
+    env
+
+    ## git pull
+    cd ${MELPADIR}
+    git fetch origin
+    git reset --hard origin/${MELPABRANCH}
+    git pull origin ${MELPABRANCH}
+    echo
+
+    ## run the script
+    cd ${MELPADIR}
+    grep --files-with-match wiki recipes/* | xargs make -j1 &
+    grep --files-without-match wiki recipes/* | xargs make -j4
+    wait
+
+    echo '{"completed":' `unix_timestamp` '}' > ${WEBROOT}/build-status.json
+}
+
+build_all

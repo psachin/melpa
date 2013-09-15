@@ -1,0 +1,6 @@
+#!/bin/bash -e
+
+cd /home/melpa/melpa
+/usr/bin/python /home/melpa/melpa/scripts/process_log.py
+
+sleep 6h
